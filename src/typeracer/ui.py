@@ -14,6 +14,7 @@ PAIR_TITLE = 5
 PAIR_STATS = 6
 PAIR_DIM = 7
 PAIR_HIGHLIGHT = 8
+PAIR_TEXT_BG = 9
 
 # Box drawing
 HORIZONTAL = "─"
@@ -28,14 +29,23 @@ def init_colors():
     """Initialize color pairs."""
     curses.start_color()
     curses.use_default_colors()
-    curses.init_pair(PAIR_CORRECT, curses.COLOR_GREEN, -1)
+
+    # Define a dark gray background for the text area (color 236 = #303030)
+    # Fall back gracefully if extended colors aren't supported
+    if curses.can_change_color() and curses.COLORS >= 256:
+        TEXT_BG = 236
+    else:
+        TEXT_BG = curses.COLOR_BLUE
+
+    curses.init_pair(PAIR_CORRECT, curses.COLOR_GREEN, TEXT_BG)
     curses.init_pair(PAIR_INCORRECT, curses.COLOR_WHITE, curses.COLOR_RED)
-    curses.init_pair(PAIR_UNTYPED, curses.COLOR_WHITE, -1)
+    curses.init_pair(PAIR_UNTYPED, curses.COLOR_WHITE, TEXT_BG)
     curses.init_pair(PAIR_CURSOR, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(PAIR_TITLE, curses.COLOR_CYAN, -1)
     curses.init_pair(PAIR_STATS, curses.COLOR_YELLOW, -1)
     curses.init_pair(PAIR_DIM, curses.COLOR_WHITE, -1)
     curses.init_pair(PAIR_HIGHLIGHT, curses.COLOR_MAGENTA, -1)
+    curses.init_pair(PAIR_TEXT_BG, curses.COLOR_WHITE, TEXT_BG)
 
 
 def draw_box(stdscr, y: int, x: int, width: int, height: int):
@@ -191,7 +201,21 @@ def draw_game(stdscr, game: GameState):
             char_positions.append((text_y + line_num * 2, text_x + col_num))
             idx += 1
 
-    # Render characters
+    # Paint background strips for each text line so spaces are visible
+    bg_attr = curses.color_pair(PAIR_TEXT_BG)
+    painted_rows = set()
+    for line_num, line in enumerate(lines):
+        row = text_y + line_num * 2
+        if row >= h - 2:
+            break
+        if row not in painted_rows:
+            try:
+                stdscr.addstr(row, text_x, " " * len(line), bg_attr)
+            except curses.error:
+                pass
+            painted_rows.add(row)
+
+    # Render characters on top of the background
     for i, char in enumerate(game.target):
         if i >= len(char_positions):
             break
@@ -293,7 +317,7 @@ def draw_results(stdscr, game: GameState):
     y += 3
 
     # Options
-    options = "Press 'r' to race again  │  Press any other key to quit"
+    options = "Press any key to race again  │  ESC to quit"
     stdscr.addstr(y, max(0, center_x - len(options) // 2), options,
                   curses.color_pair(PAIR_HIGHLIGHT) | curses.A_BOLD)
 

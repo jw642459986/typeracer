@@ -14,13 +14,13 @@ def game_loop(stdscr):
     stdscr.keypad(True)
     init_colors()
 
-    while True:
-        # Welcome screen
-        draw_welcome(stdscr)
-        key = stdscr.getch()
-        if key == 27:  # ESC
-            return
+    # Welcome screen (shown only once)
+    draw_welcome(stdscr)
+    key = stdscr.getch()
+    if key == 27:  # ESC
+        return
 
+    while True:
         # New game
         game = GameState()
 
@@ -54,10 +54,9 @@ def game_loop(stdscr):
         draw_results(stdscr, game)
         key = stdscr.getch()
 
-        if key == ord("r") or key == ord("R"):
-            continue  # Play again
-        else:
+        if key == 27:  # ESC
             return
+        # Any other key starts a new race
 
 
 def main():
