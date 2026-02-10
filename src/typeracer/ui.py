@@ -137,69 +137,72 @@ def wrap_text(text: str, width: int) -> List[str]:
 
 
 def draw_game(stdscr, game: GameState):
-    """Draw the main game screen."""
+    """Draw the main game screen, centered like the other screens."""
     stdscr.clear()
     h, w = stdscr.getmaxyx()
+    center_x = w // 2
 
-    # Title bar
+    # Layout dimensions
+    text_area_width = min(w - 6, 70)
+    text_x = max(3, (w - text_area_width) // 2)
+
+    # Word-wrap the target text to calculate total height needed
+    lines = wrap_text(game.target, text_area_width)
+    # Total content height: title(1) + sep(1) + stats(1) + bar(1) + sep(1)
+    #                        + gap(1) + text lines with spacing + gap(1) + hint(1)
+    text_lines_height = len(lines) * 2 - 1  # lines with single spacing between
+    total_height = 6 + text_lines_height + 2
+    start_y = max(1, (h - total_height) // 2)
+
+    y = start_y
+
+    # Title
     title = " TYPERACER "
-    stdscr.addstr(0, max(0, (w - len(title)) // 2), title,
+    stdscr.addstr(y, max(0, center_x - len(title) // 2), title,
                   curses.color_pair(PAIR_TITLE) | curses.A_BOLD)
-    stdscr.addstr(1, 0, HORIZONTAL * w,
+    y += 1
+
+    # Separator
+    stdscr.addstr(y, text_x, HORIZONTAL * text_area_width,
                   curses.color_pair(PAIR_DIM) | curses.A_DIM)
+    y += 1
 
-    # Stats bar
+    # Stats bar (centered)
     if game.is_started:
-        wpm_str = f" WPM: {game.wpm:5.1f} "
-        acc_str = f" ACC: {game.accuracy:5.1f}% "
-        time_str = f" TIME: {game.elapsed_seconds:5.1f}s "
-        prog_str = f" {game.progress:3.0f}% "
+        wpm_str = f"WPM: {game.wpm:5.1f}"
+        acc_str = f"ACC: {game.accuracy:5.1f}%"
+        time_str = f"TIME: {game.elapsed_seconds:5.1f}s"
     else:
-        wpm_str = " WPM:   --- "
-        acc_str = " ACC:   --- "
-        time_str = " TIME:   0.0s "
-        prog_str = "   0% "
+        wpm_str = "WPM:   ---"
+        acc_str = "ACC:   ---"
+        time_str = "TIME:   0.0s"
 
-    stats_y = 2
-    col = 2
-    stdscr.addstr(stats_y, col, wpm_str,
+    stats_line = f"  {wpm_str}  │  {acc_str}  │  {time_str}  "
+    stdscr.addstr(y, max(0, center_x - len(stats_line) // 2), stats_line,
                   curses.color_pair(PAIR_STATS) | curses.A_BOLD)
-    col += len(wpm_str) + 2
-    stdscr.addstr(stats_y, col, acc_str,
-                  curses.color_pair(PAIR_STATS) | curses.A_BOLD)
-    col += len(acc_str) + 2
-    stdscr.addstr(stats_y, col, time_str,
-                  curses.color_pair(PAIR_DIM))
-    col += len(time_str) + 2
-    stdscr.addstr(stats_y, col, prog_str,
-                  curses.color_pair(PAIR_DIM))
+    y += 1
 
-    # Progress bar
-    bar_y = 3
-    bar_width = w - 4
+    # Progress bar (same width as text area)
+    bar_width = text_area_width
     filled = int(bar_width * game.progress / 100)
     bar = "█" * filled + "░" * (bar_width - filled)
-    stdscr.addstr(bar_y, 2, bar, curses.color_pair(PAIR_TITLE))
+    stdscr.addstr(y, text_x, bar, curses.color_pair(PAIR_TITLE))
+    y += 1
 
-    stdscr.addstr(4, 0, HORIZONTAL * w,
+    # Separator
+    stdscr.addstr(y, text_x, HORIZONTAL * text_area_width,
                   curses.color_pair(PAIR_DIM) | curses.A_DIM)
+    y += 2
 
     # Text area
-    text_area_width = min(w - 6, 80)
-    text_x = max(3, (w - text_area_width) // 2)
-    text_y = 6
-
-    # Word-wrap the target text
-    lines = wrap_text(game.target, text_area_width)
+    text_y = y
 
     # Build a flat index map: for each char position in target,
     # figure out which (row, col) it maps to on screen
     char_positions: List[Tuple[int, int]] = []
-    idx = 0
     for line_num, line in enumerate(lines):
         for col_num in range(len(line)):
             char_positions.append((text_y + line_num * 2, text_x + col_num))
-            idx += 1
 
     # Paint background strips for each text line so spaces are visible
     bg_attr = curses.color_pair(PAIR_TEXT_BG)
@@ -242,7 +245,7 @@ def draw_game(stdscr, game: GameState):
     # Hint at bottom
     hint = " ESC to quit │ Backspace to correct "
     try:
-        stdscr.addstr(h - 1, max(0, (w - len(hint)) // 2), hint,
+        stdscr.addstr(h - 1, max(0, center_x - len(hint) // 2), hint,
                       curses.color_pair(PAIR_DIM) | curses.A_DIM)
     except curses.error:
         pass
