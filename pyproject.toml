@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typeracer"
+version = "1.0.0"
+description = "A terminal-based type racing game"
+requires-python = ">=3.9"
+
+[project.scripts]
+typeracer = "typeracer.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,14 @@
+pyproject.toml
+setup.cfg
+setup.py
+src/typeracer/__init__.py
+src/typeracer/__main__.py
+src/typeracer/game.py
+src/typeracer/main.py
+src/typeracer/quotes.py
+src/typeracer/ui.py
+src/typeracer.egg-info/PKG-INFO
+src/typeracer.egg-info/SOURCES.txt
+src/typeracer.egg-info/dependency_links.txt
+src/typeracer.egg-info/entry_points.txt
+src/typeracer.egg-info/top_level.txt
