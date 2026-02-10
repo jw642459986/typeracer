@@ -16,6 +16,12 @@ cd typeracer
 pip install .
 ```
 
+Or install directly from a local path:
+
+```bash
+pip3 install --user /path/to/typeracer
+```
+
 ## Usage
 
 ```bash
