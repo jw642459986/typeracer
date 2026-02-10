@@ -31,6 +31,15 @@ typeracer
 - Press **Escape** to quit
 - After finishing, press any key to race again or **Escape** to exit
 
+## Troubleshooting
+
+If `typeracer` isn't found after installing, your Python user bin directory may not be on your PATH:
+
+- **macOS**: `export PATH="$HOME/Library/Python/3.X/bin:$PATH"` (replace `3.X` with your Python version)
+- **Linux**: `export PATH="$HOME/.local/bin:$PATH"`
+
+Add the appropriate line to your `~/.zshrc` or `~/.bashrc` to make it permanent.
+
 ## Uninstall
 
 ```bash
