@@ -198,13 +198,19 @@ def draw_game(stdscr, game: GameState):
     text_y = y
 
     # Build a flat index map: for each char position in target,
-    # figure out which (row, col) it maps to on screen
+    # figure out which (row, col) it maps to on screen.
+    # Word-wrapping drops the space at line breaks, so we add it back
+    # at the end of each wrapped line to keep positions aligned with target.
     char_positions: List[Tuple[int, int]] = []
     for line_num, line in enumerate(lines):
         for col_num in range(len(line)):
             char_positions.append((text_y + line_num * 2, text_x + col_num))
+        # Add the missing space at the wrap boundary (except after the last line)
+        if line_num < len(lines) - 1:
+            char_positions.append((text_y + line_num * 2, text_x + len(line)))
 
     # Paint background strips for each text line so spaces are visible
+    # Include +1 width for the wrap-boundary space on all lines except the last
     bg_attr = curses.color_pair(PAIR_TEXT_BG)
     painted_rows = set()
     for line_num, line in enumerate(lines):
@@ -212,8 +218,9 @@ def draw_game(stdscr, game: GameState):
         if row >= h - 2:
             break
         if row not in painted_rows:
+            bg_width = len(line) + (1 if line_num < len(lines) - 1 else 0)
             try:
-                stdscr.addstr(row, text_x, " " * len(line), bg_attr)
+                stdscr.addstr(row, text_x, " " * bg_width, bg_attr)
             except curses.error:
                 pass
             painted_rows.add(row)
