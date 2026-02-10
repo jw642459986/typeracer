@@ -1,9 +1,8 @@
 """Core game state and logic for the type racer."""
 
 import time
-import random
 from typing import List, Optional
-from typeracer.quotes import QUOTES
+from typeracer.quotes import fetch_quote, QuoteFetchError
 
 
 class GameState:
@@ -18,8 +17,8 @@ class GameState:
         self.reset()
 
     def reset(self):
-        """Reset for a new game with a random quote."""
-        self.target = random.choice(QUOTES)
+        """Reset for a new game with a fresh quote."""
+        self.target = fetch_quote()
         self.typed = []
         self.start_time = None
         self.end_time = None

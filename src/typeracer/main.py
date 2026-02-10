@@ -3,7 +3,10 @@
 import curses
 import sys
 from typeracer.game import GameState
-from typeracer.ui import init_colors, draw_welcome, draw_game, draw_results
+from typeracer.quotes import QuoteFetchError
+from typeracer.ui import (
+    init_colors, draw_welcome, draw_game, draw_results, draw_error,
+)
 
 
 def game_loop(stdscr):
@@ -21,8 +24,18 @@ def game_loop(stdscr):
         return
 
     while True:
-        # New game
-        game = GameState()
+        # Try to create a new game, retrying on network errors
+        game = None
+        while game is None:
+            try:
+                game = GameState()
+            except QuoteFetchError as e:
+                stdscr.timeout(-1)
+                draw_error(stdscr, str(e))
+                key = stdscr.getch()
+                if key == 27:  # ESC
+                    return
+                # Any other key retries
 
         # Enable timeout so we can refresh stats while waiting for input
         stdscr.timeout(100)  # 100ms refresh

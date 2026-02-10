@@ -253,6 +253,48 @@ def draw_game(stdscr, game: GameState):
     stdscr.refresh()
 
 
+def draw_error(stdscr, error_message: str):
+    """Draw a network error screen, centered like the other screens."""
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
+    center_x = w // 2
+
+    y = max(2, h // 2 - 5)
+
+    # Error icon and header
+    header = "NETWORK ERROR"
+    stdscr.addstr(y, max(0, center_x - len(header) // 2), header,
+                  curses.color_pair(PAIR_INCORRECT) | curses.A_BOLD)
+    y += 2
+
+    stdscr.addstr(y, max(0, center_x - 20), HORIZONTAL * 40,
+                  curses.color_pair(PAIR_DIM) | curses.A_DIM)
+    y += 2
+
+    # Error message
+    msg = "Unable to fetch quote from the server."
+    stdscr.addstr(y, max(0, center_x - len(msg) // 2), msg,
+                  curses.color_pair(PAIR_DIM))
+    y += 2
+
+    # Detail
+    detail = error_message if len(error_message) < w - 4 else error_message[:w - 7] + "..."
+    stdscr.addstr(y, max(0, center_x - len(detail) // 2), detail,
+                  curses.color_pair(PAIR_DIM) | curses.A_DIM)
+    y += 2
+
+    stdscr.addstr(y, max(0, center_x - 20), HORIZONTAL * 40,
+                  curses.color_pair(PAIR_DIM) | curses.A_DIM)
+    y += 2
+
+    # Options
+    options = "Press any key to retry  │  ESC to quit"
+    stdscr.addstr(y, max(0, center_x - len(options) // 2), options,
+                  curses.color_pair(PAIR_HIGHLIGHT) | curses.A_BOLD)
+
+    stdscr.refresh()
+
+
 def draw_results(stdscr, game: GameState):
     """Draw the results screen after a race."""
     stdscr.clear()
