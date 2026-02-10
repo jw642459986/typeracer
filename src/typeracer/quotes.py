@@ -4,9 +4,12 @@ import json
 import ssl
 import urllib.request
 import urllib.error
+from collections import namedtuple
 
 
 API_URL = "https://api.quotable.io/random?minLength=40&maxLength=150"
+
+Quote = namedtuple("Quote", ["content", "author"])
 
 
 class QuoteFetchError(Exception):
@@ -17,9 +20,10 @@ class QuoteFetchError(Exception):
         super().__init__(reason)
 
 
-def fetch_quote() -> str:
+def fetch_quote() -> Quote:
     """Fetch a random quote from the Quotable API.
 
+    Returns a Quote namedtuple with content and author fields.
     Raises QuoteFetchError if the request fails for any reason.
     Uses a short timeout so the game never hangs.
     """
@@ -42,8 +46,9 @@ def fetch_quote() -> str:
         data = json.loads(resp.read().decode("utf-8"))
         resp.close()
         content = data.get("content", "").strip()
+        author = data.get("author", "").strip()
         if content:
-            return content
+            return Quote(content=content, author=author or "Unknown")
         raise QuoteFetchError("API returned an empty quote")
     except QuoteFetchError:
         raise

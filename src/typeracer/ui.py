@@ -149,9 +149,9 @@ def draw_game(stdscr, game: GameState):
     # Word-wrap the target text to calculate total height needed
     lines = wrap_text(game.target, text_area_width)
     # Total content height: title(1) + sep(1) + stats(1) + bar(1) + sep(1)
-    #                        + gap(1) + text lines with spacing + gap(1) + hint(1)
+    #                        + gap(1) + text lines with spacing + gap(1) + author(1) + hint(1)
     text_lines_height = len(lines) * 2 - 1  # lines with single spacing between
-    total_height = 6 + text_lines_height + 2
+    total_height = 6 + text_lines_height + 4
     start_y = max(1, (h - total_height) // 2)
 
     y = start_y
@@ -242,6 +242,19 @@ def draw_game(stdscr, game: GameState):
         except curses.error:
             pass
 
+    # Author attribution below the text
+    if game.author:
+        last_text_row = text_y + (len(lines) - 1) * 2
+        author_str = f"— {game.author}"
+        author_y = last_text_row + 2
+        if author_y < h - 2:
+            try:
+                author_x = text_x + text_area_width - len(author_str)
+                stdscr.addstr(author_y, max(text_x, author_x), author_str,
+                              curses.color_pair(PAIR_DIM) | curses.A_ITALIC)
+            except curses.error:
+                pass
+
     # Hint at bottom
     hint = " ESC to quit │ Backspace to correct "
     try:
@@ -312,6 +325,13 @@ def draw_results(stdscr, game: GameState):
     stdscr.addstr(y, max(0, center_x - 20), HORIZONTAL * 40,
                   curses.color_pair(PAIR_DIM) | curses.A_DIM)
     y += 2
+
+    # Quote attribution
+    if game.author:
+        author_str = f"Quote by {game.author}"
+        stdscr.addstr(y, max(0, center_x - len(author_str) // 2), author_str,
+                      curses.color_pair(PAIR_DIM) | curses.A_ITALIC)
+        y += 2
 
     # Stats
     stats = [

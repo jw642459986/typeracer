@@ -3,20 +3,26 @@
 import unittest
 from unittest.mock import patch
 from typeracer.game import GameState
-from typeracer.quotes import QuoteFetchError
+from typeracer.quotes import Quote, QuoteFetchError
 
 # Patch where fetch_quote is looked up (in the game module), not where it's defined
 FETCH_PATCH = "typeracer.game.fetch_quote"
 
 
+def make_quote(content, author="Test Author"):
+    """Helper to create a Quote namedtuple for mocks."""
+    return Quote(content=content, author=author)
+
+
 class TestGameState(unittest.TestCase):
     """Tests for GameState."""
 
-    @patch(FETCH_PATCH, return_value="Hello world.")
+    @patch(FETCH_PATCH, return_value=make_quote("Hello world."))
     def test_initial_state(self, _mock):
         """New game has correct initial state."""
         game = GameState()
         self.assertEqual(game.target, "Hello world.")
+        self.assertEqual(game.author, "Test Author")
         self.assertEqual(game.typed, [])
         self.assertFalse(game.is_started)
         self.assertFalse(game.is_finished)
@@ -24,7 +30,13 @@ class TestGameState(unittest.TestCase):
         self.assertEqual(game.accuracy, 100.0)
         self.assertEqual(game.progress, 0.0)
 
-    @patch(FETCH_PATCH, return_value="Hi")
+    @patch(FETCH_PATCH, return_value=make_quote("Hello.", "Einstein"))
+    def test_stores_author(self, _mock):
+        """GameState stores the author from the fetched quote."""
+        game = GameState()
+        self.assertEqual(game.author, "Einstein")
+
+    @patch(FETCH_PATCH, return_value=make_quote("Hi"))
     def test_type_char_starts_game(self, _mock):
         """Typing the first character starts the timer."""
         game = GameState()
@@ -33,7 +45,7 @@ class TestGameState(unittest.TestCase):
         self.assertTrue(game.is_started)
         self.assertIsNotNone(game.start_time)
 
-    @patch(FETCH_PATCH, return_value="Hi")
+    @patch(FETCH_PATCH, return_value=make_quote("Hi"))
     def test_typing_completes_game(self, _mock):
         """Typing all characters finishes the game."""
         game = GameState()
@@ -43,7 +55,7 @@ class TestGameState(unittest.TestCase):
         self.assertTrue(game.is_finished)
         self.assertIsNotNone(game.end_time)
 
-    @patch(FETCH_PATCH, return_value="Hi")
+    @patch(FETCH_PATCH, return_value=make_quote("Hi"))
     def test_type_char_ignored_after_finish(self, _mock):
         """Characters typed after the game ends are ignored."""
         game = GameState()
@@ -53,7 +65,7 @@ class TestGameState(unittest.TestCase):
         game.type_char("!")
         self.assertEqual(len(game.typed), 2)
 
-    @patch(FETCH_PATCH, return_value="abc")
+    @patch(FETCH_PATCH, return_value=make_quote("abc"))
     def test_backspace(self, _mock):
         """Backspace removes the last typed character."""
         game = GameState()
@@ -64,14 +76,14 @@ class TestGameState(unittest.TestCase):
         self.assertEqual(len(game.typed), 1)
         self.assertEqual(game.typed, ["a"])
 
-    @patch(FETCH_PATCH, return_value="abc")
+    @patch(FETCH_PATCH, return_value=make_quote("abc"))
     def test_backspace_on_empty(self, _mock):
         """Backspace on empty typed list does nothing."""
         game = GameState()
         game.backspace()  # should not raise
         self.assertEqual(game.typed, [])
 
-    @patch(FETCH_PATCH, return_value="abcd")
+    @patch(FETCH_PATCH, return_value=make_quote("abcd"))
     def test_progress(self, _mock):
         """Progress tracks percentage of characters typed."""
         game = GameState()
@@ -81,7 +93,7 @@ class TestGameState(unittest.TestCase):
         game.type_char("b")
         self.assertAlmostEqual(game.progress, 50.0)
 
-    @patch(FETCH_PATCH, return_value="ab")
+    @patch(FETCH_PATCH, return_value=make_quote("ab"))
     def test_correct_chars_count(self, _mock):
         """correct_chars only counts matching characters."""
         game = GameState()
@@ -89,7 +101,7 @@ class TestGameState(unittest.TestCase):
         game.type_char("x")  # wrong
         self.assertEqual(game.correct_chars, 1)
 
-    @patch(FETCH_PATCH, return_value="ab")
+    @patch(FETCH_PATCH, return_value=make_quote("ab"))
     def test_accuracy(self, _mock):
         """Accuracy reflects correct keystrokes vs total keystrokes."""
         game = GameState()
@@ -101,15 +113,16 @@ class TestGameState(unittest.TestCase):
     @patch(FETCH_PATCH)
     def test_reset(self, mock_fetch):
         """Reset clears state and fetches a new quote."""
-        mock_fetch.return_value = "test"
+        mock_fetch.return_value = make_quote("test", "Author A")
         game = GameState()
         game.type_char("t")
         game.type_char("e")
 
-        mock_fetch.return_value = "new quote"
+        mock_fetch.return_value = make_quote("new quote", "Author B")
         game.reset()
 
         self.assertEqual(game.target, "new quote")
+        self.assertEqual(game.author, "Author B")
         self.assertEqual(game.typed, [])
         self.assertFalse(game.is_started)
         self.assertEqual(game.total_keystrokes, 0)
@@ -129,7 +142,7 @@ class TestGameStateNetworkError(unittest.TestCase):
     @patch(FETCH_PATCH)
     def test_reset_raises_on_fetch_error(self, mock_fetch):
         """GameState.reset() propagates QuoteFetchError."""
-        mock_fetch.return_value = "initial quote"
+        mock_fetch.return_value = make_quote("initial quote")
         game = GameState()
 
         mock_fetch.side_effect = QuoteFetchError("timed out")

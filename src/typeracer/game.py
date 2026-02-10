@@ -10,6 +10,7 @@ class GameState:
 
     def __init__(self):
         self.target: str = ""
+        self.author: str = ""
         self.typed: List[str] = []
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
@@ -18,7 +19,9 @@ class GameState:
 
     def reset(self):
         """Reset for a new game with a fresh quote."""
-        self.target = fetch_quote()
+        quote = fetch_quote()
+        self.target = quote.content
+        self.author = quote.author
         self.typed = []
         self.start_time = None
         self.end_time = None
